@@ -1,6 +1,6 @@
 # EventBridge-notifications
 
-In this repository you can find useful AWS EventBridge patterns
+In this repository you can find useful AWS EventBridge patterns.
 
 ## Track login events to AWS Console through IAM User
 
@@ -53,7 +53,7 @@ When using AWS Organization, you can track login attempts to an AWS account usin
 To monitor attempts to delete a CloudFormation stack, you can use the following AWS EventBridge rule pattern. In this example, AWS EventBridge will trigger if someone tries to delete a stack with the following names:
 
 - `MyInfrastructure`;
-- `MySecurityDev` или `MySecurityProd` - because the MySecurity is followed by an `*` (asterisk);
+- `MySecurityDev` or `MySecurityProd` - because the MySecurity is followed by an `*` (asterisk);
 - `ImportantStackTest`, `NewImportantStackDev`, `NewImportantStackProd` - because ImportantStack is surrounded by `*` (asterisks).
 
 ```json

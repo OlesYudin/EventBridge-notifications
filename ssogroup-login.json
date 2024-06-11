@@ -1,0 +1,16 @@
+{
+  "detail-type": ["AWS Console Sign In via CloudTrail"],
+  "source": ["aws.signin"],
+  "detail": {
+    "eventSource": ["signin.amazonaws.com"],
+    "eventName": ["ConsoleLogin"],
+    "userIdentity": {
+      "type": ["AssumedRole"],
+      "arn": [
+        {
+          "wildcard": "arn:aws:sts::<accound_id>:assumed-role/AWSReservedSSO_Administrator*/*"
+        }
+      ]
+    }
+  }
+}

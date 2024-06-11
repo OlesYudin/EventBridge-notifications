@@ -1,0 +1,12 @@
+{
+  "detail-type": ["AWS Console Sign In via CloudTrail"],
+  "source": ["aws.signin"],
+  "detail": {
+    "eventSource": ["signin.amazonaws.com"],
+    "eventName": ["ConsoleLogin"],
+    "userIdentity": {
+      "type": ["IAMUser"],
+      "userName": ["UserDeveloper"]
+    }
+  }
+}

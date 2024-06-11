@@ -1,0 +1,20 @@
+{
+  "detail-type": ["CloudFormation Stack Status Change"],
+  "resources": [
+    {
+      "wildcard": "arn:aws:cloudformation:*:*:stack/MyInfrastructure/*"
+    },
+    {
+      "wildcard": "arn:aws:cloudformation:*:*:stack/MySecurity*/*"
+    },
+    {
+      "wildcard": "arn:aws:cloudformation:*:*:stack/*ImportantStack*/*"
+    }
+  ],
+  "source": ["aws.cloudformation"],
+  "detail": {
+    "status-details": {
+      "status": ["DELETE_COMPLETE", "DELETE_FAILED", "DELETE_IN_PROGRESS"]
+    }
+  }
+}

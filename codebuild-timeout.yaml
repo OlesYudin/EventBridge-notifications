@@ -1,0 +1,101 @@
+AWSTemplateFormatVersion: 2010-09-09 
+Description: Create EventBridge rule for CodeBuild timeout
+
+Parameters:
+  CodeBuildName:
+    Description: "CodeBuild name that will be monitored by EventBridge"
+    Type: String
+    Default: "My-CodeBuild"
+
+Resources:
+#############################################################
+######################### SNS Topic #########################
+#############################################################
+  SNSTopicCodeBuildTimeout:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: !Sub "${CodeBuildName}-timeout-behaviour"
+      TopicName: !Sub "${CodeBuildName}-timeout-behaviour"
+
+#############################################################
+###################### SNS Topic Policy #####################
+#############################################################
+  SNSPolicyCodeBuildTimeout:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Id: eventbridge_policy
+        Statement:
+        - Sid: eventbridge_policy
+          Effect: Allow
+          Principal:
+            Service: events.amazonaws.com
+          Action: SNS:Publish
+          Resource: !Ref SNSTopicCodeBuildTimeout
+        - Sid: eventbridge_policy_statement
+          Effect: Allow
+          Principal:
+            AWS: !Sub "${AWS::AccountId}"
+          Action:
+          - SNS:Subscribe
+          - SNS:SetTopicAttributes
+          - SNS:RemovePermission
+          - SNS:Receive
+          - SNS:Publish
+          - SNS:ListSubscriptionsByTopic
+          - SNS:GetTopicAttributes
+          - SNS:DeleteTopic
+          - SNS:AddPermission
+          Resource: !Ref SNSTopicCodeBuildTimeout
+          Condition:
+            StringEquals:
+              AWS:SourceOwner: !Sub "${AWS::AccountId}"
+      Topics:
+        - !Ref SNSTopicCodeBuildTimeout
+
+#############################################################
+###################### EventBridge Rule #####################
+#############################################################
+  EventBridgetRuleCodeBuildTimeout:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: "CodeBuild-timeout"
+      Description: "Created for cases when the build fails due to a timeout and notification about failure cannot be sent from the build itself."
+      State: ENABLED
+      EventPattern:
+        source:
+          - "aws.codebuild"
+        detail-type:
+          - "CodeBuild Build Phase Change"
+        detail:
+          project-name:
+            - !Ref CodeBuildName
+          completed-phase: # define phases that will be checked by EventBridge (detail: https://docs.aws.amazon.com/codebuild/latest/userguide/sample-build-notifications.html)
+            - "INSTALL"
+            - "PRE_BUILD"
+            - "BUILD"
+            - "POST_BUILD"
+            - "FINALIZING"
+          completed-phase-status: # define behaviour that should be tracked by EventBridge (detail: https://docs.aws.amazon.com/codebuild/latest/userguide/sample-build-notifications.html)
+            - "TIMED_OUT"
+            - "CLIENT_ERROR"
+      Targets: 
+        - Arn: !Ref SNSTopicCodeBuildTimeout
+          Id: SNSTopicCodeBuildTimeout
+          InputTransformer: # define transformer to prettier message that will be send to SNS topic (detail: https://docs.aws.amazon.com/codebuild/latest/userguide/sample-build-notifications-ref.html)
+            InputPathsMap:
+              "project-name": "$.detail.project-name"
+              "build-id": "$.detail.build-id"
+              "phase": "$.detail.completed-phase"
+              "status": "$.detail.completed-phase-status"
+              "initiator": "$.detail.additional-information.initiator"
+              "cw-logs": "$.detail.additional-information.logs.deep-link"
+            InputTemplate: |
+              {
+                "version": "1.0",
+                "source": "custom",
+                "content": {
+                    "description": "[<project-name>] :x: CodeBuild failed\n<<cw-logs>|CloudWatch Logs>\n\n*Details:*\n```Build ID: <build-id>\ninitiator: <initiator>\nphase: <phase>\nstatus: <status>```"
+                }
+              }
